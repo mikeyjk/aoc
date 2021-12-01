@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "tsc day1.ts day1pt2.ts",
+    "start": "node day1.js; node day1pt2.js"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.11"
+  }
+}
