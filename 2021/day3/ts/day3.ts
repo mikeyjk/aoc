@@ -9,7 +9,6 @@ const transposeArray = (input: number[][]): number[][] => {
       transposed[colNum][rowNum] = digit;
     });
   });
-
   return transposed;
 };
 
@@ -26,13 +25,7 @@ const binarySequencesByColumn: number[][] = fs
 
 // transpose the sequences to be in each row
 // i.e. sequence #1 is ([0,1],[0,2],[0,3],...,[0,n])
-const binarySequencesByRow: number[][] = transposeArray(
-  binarySequencesByColumn
-);
-
-console.log({ binarySequencesByColumn, binarySequencesByRow });
-
-const gammaSquence: number[] = binarySequencesByRow.reduce(
+const gammaSquence: number[] = transposeArray(binarySequencesByColumn).reduce(
   (prevSequence, currSequence, index) => {
     const sequenceLength = currSequence.length;
     prevSequence[index] =
@@ -42,19 +35,14 @@ const gammaSquence: number[] = binarySequencesByRow.reduce(
   []
 );
 
-const epsilonSequence: number[] = gammaSquence.map((b) => (b === 1 ? 0 : 1));
-const gammaRate: number = parseInt(gammaSquence.join(""), 2);
-const epsilonRate: number = parseInt(epsilonSequence.join(""), 2);
-
-/**
- * pt2
- */
 type BitFreqCount = {
   oneCount: number;
   total: number;
 };
 
-const calculateBitFreq = (binarySequences: number[][]): BitFreqCount[] => {
+const calculateColumnBitFreq = (
+  binarySequences: number[][]
+): BitFreqCount[] => {
   let frequencyCount: BitFreqCount[] = [];
 
   binarySequences.forEach((slicedRow) => {
@@ -67,74 +55,72 @@ const calculateBitFreq = (binarySequences: number[][]): BitFreqCount[] => {
       frequencyCount[columnNum].total++;
     });
   });
-
   return frequencyCount;
 };
 
 const filterSequenceByBitFrequency = (
-  majorSequences: number[][],
-  minorSequences: number[][],
+  inputSequences: number[][],
   columnNumber: number,
-  majorMainlyOnes: boolean,
-  minorMainlyOnes: boolean
-): { majorSequences: number[][]; minorSequences: number[][] } => {
-  if (majorSequences.length > 1) {
-    for (let i = majorSequences.length - 1; i >= 0; i--) {
-      if (majorSequences[i][columnNumber] !== (majorMainlyOnes ? 1 : 0)) {
-        majorSequences.splice(i, 1);
-      }
-    }
-  }
+  matchingDigit: number
+): number[][] => {
+  let filteredSequences: number[][] = new Array(...inputSequences);
 
-  if (minorSequences.length > 1) {
-    for (let i = minorSequences.length - 1; i >= 0; i--) {
-      if (minorSequences[i][columnNumber] !== (minorMainlyOnes ? 0 : 1)) {
-        minorSequences.splice(i, 1);
-      }
+  // move from bottom to top, so we can splice in place
+  // (otherwise referencing array cells are thrown off)
+  for (let i = filteredSequences.length - 1; i >= 0; i--) {
+    if (filteredSequences[i][columnNumber] !== matchingDigit) {
+      filteredSequences.splice(i, 1);
     }
   }
-  return { majorSequences, minorSequences };
+  return filteredSequences;
 };
 
-let oxygenGeneratorSequence: number[][] = new Array(...binarySequencesByColumn);
-let c02ScrubberRating: number[][] = new Array(...binarySequencesByColumn);
-let loopLength = oxygenGeneratorSequence[0].length;
-// console.log({ loopLength, sequenceFilteredMajority });
+const filterLifeSupportSequencePart = (
+  lifeSupportSequencePart: number[][],
+  prefferedDigit: number,
+  alternateDigit: number
+) => {
+  let columnNum = 0;
+  let filteredSequencePart = new Array(...lifeSupportSequencePart);
 
-for (let i = 0; i < loopLength; i++) {
-  let majorityBitFreq: BitFreqCount[] = calculateBitFreq(
-    oxygenGeneratorSequence
-  );
-  let minorityBitFreq: BitFreqCount[] = calculateBitFreq(c02ScrubberRating);
-  const majorBitFreq = majorityBitFreq[i];
-  const minorBitFreq = minorityBitFreq[i];
+  while (filteredSequencePart.length > 1) {
+    let bitFrequency: BitFreqCount[] =
+      calculateColumnBitFreq(filteredSequencePart);
 
-  console.log({
-    majorBitFreq,
-    minorBitFreq,
-    i,
-    oxygenGeneratorSequence,
-  });
-  const majorColumnMedian = majorBitFreq.total / 2;
-  const majorMainlyOnes = majorBitFreq.oneCount >= majorColumnMedian;
+    const filterDigit =
+      bitFrequency[columnNum].oneCount >= bitFrequency[columnNum].total / 2
+        ? prefferedDigit
+        : alternateDigit;
 
-  const minorColumnMedian = minorBitFreq.total / 2;
-  const minorMainlyOnes = minorBitFreq.oneCount >= minorColumnMedian;
+    filteredSequencePart = filterSequenceByBitFrequency(
+      filteredSequencePart,
+      columnNum,
+      filterDigit
+    );
 
-  filterSequenceByBitFrequency(
-    oxygenGeneratorSequence,
-    c02ScrubberRating,
-    i,
-    majorMainlyOnes,
-    minorMainlyOnes
-  );
-}
+    columnNum++;
+  }
+  return filteredSequencePart;
+};
 
+const epsilonSequence: number[] = gammaSquence.map((b) => (b === 1 ? 0 : 1));
+const gammaRate: number = parseInt(gammaSquence.join(""), 2);
+const epsilonRate: number = parseInt(epsilonSequence.join(""), 2);
+const oxygenGeneratorSequence = filterLifeSupportSequencePart(
+  binarySequencesByColumn,
+  1,
+  0
+);
+const c02ScrubberSequence = filterLifeSupportSequencePart(
+  binarySequencesByColumn,
+  0,
+  1
+);
 const oxygenGeneratorRate: number = parseInt(
   oxygenGeneratorSequence[0].join(""),
   2
 );
-const c02ScrubberRate: number = parseInt(c02ScrubberRating[0].join(""), 2);
+const c02ScrubberRate: number = parseInt(c02ScrubberSequence[0].join(""), 2);
 
 console.log({
   gammaSquence,
@@ -143,7 +129,7 @@ console.log({
   epsilonRate,
   powerConsumption: gammaRate * epsilonRate,
   oxygenGeneratorSequence,
-  c02ScrubberRating,
+  c02ScrubberSequence,
   oxygenGeneratorRate,
   c02ScrubberRate,
   lifeSupportRating: oxygenGeneratorRate * c02ScrubberRate,
