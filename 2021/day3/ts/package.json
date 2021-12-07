@@ -1,7 +1,7 @@
 {
   "license": "UNLICENSED",
   "scripts": {
-    "build": "tsc day3.ts --outDir dist",
+    "build": "tsc",
     "start": "npm run build; node dist/day3.js"
   },
   "devDependencies": {
