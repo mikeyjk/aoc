@@ -1,8 +1,6 @@
 import * as fs from "fs";
 
-const input: string[] = fs
-  .readFileSync("../sample-input.txt", "utf8")
-  .split("\n");
+const input: string[] = fs.readFileSync("../input.txt", "utf8").split("\n");
 
 const bingoNumbers = input
   .shift()
@@ -16,6 +14,7 @@ type BoardCell = {
 
 type BingoRow = BoardCell[];
 type BingoColumn = BoardCell[];
+type BingoSequence = BingoRow | BingoColumn;
 
 // store each column and row as contigous arrays
 type BingoBoard = {
@@ -37,18 +36,18 @@ const bingoBoards = input
       prev[boardCount].rows = prev[boardCount].rows || [];
       prev[boardCount].columns = prev[boardCount].columns || [];
 
-      // seems problematic to calculate isBingo ahead of time
       prev[boardCount].rows.push(
         current.map((cellChar, cellIndex) => {
           const cellDigit = parseInt(cellChar);
-          prev[boardCount].columns[cellIndex] =
-            prev[boardCount].columns[cellIndex] || [];
+
+          if (!prev[boardCount].columns[cellIndex]) {
+            prev[boardCount].columns[cellIndex] = [];
+          }
 
           prev[boardCount].columns[cellIndex][index] = prev[boardCount].columns[
             cellIndex
-          ][index] || { value: 0, isBingo: false };
+          ][index] || { value: cellDigit, isBingo: false };
 
-          prev[boardCount].columns[cellIndex][index].value = cellDigit;
           return { value: cellDigit, isBingo: false };
         })
       );
@@ -58,69 +57,121 @@ const bingoBoards = input
 
 const hasNumberTriggeredBingo = (
   bingoNumber: number,
-  sequence: BingoRow | BingoColumn
+  sequence: BingoSequence
 ): boolean => {
-  const requiredMatches = sequence.length;
-  let matches = 0;
-  sequence.forEach((boardCell) => {
-    if (boardCell.isBingo || bingoNumber === boardCell.value) {
-      matches++;
-      boardCell.isBingo = true;
-    }
-  });
-  return matches === requiredMatches;
+  return (
+    sequence.filter((boardCell) => {
+      if (!boardCell.isBingo && bingoNumber !== boardCell.value) {
+        return boardCell;
+      } else {
+        boardCell.isBingo = true;
+      }
+    }).length === 0
+  );
 };
 
-let bingo = false;
-let winningNumber: number;
-let bingoSequence: BingoRow | BingoColumn;
-let winningBoard: BingoBoard;
+type SequenceType = "row" | "column";
+
+type Bingo = {
+  winningNumber: number;
+  winningSequence: number[];
+  boardNumber: number;
+  unmarkedNumbers: number[];
+  sequenceType: SequenceType;
+};
+
+let winningBoards: number[] = [];
+let winningBoardData: Bingo[] = [];
+
+const populateBoardData = (
+  bingoNumber: number,
+  boardNumber: number,
+  bingoSequence: BingoSequence,
+  sequenceType: SequenceType,
+  unmarkedNumbers: number[]
+): Bingo => {
+  return {
+    winningNumber: bingoNumber,
+    // winningSequence: [...bingoSequence.map((seq) => seq.value).filter(Boolean)],
+    winningSequence: [...bingoSequence.map((seq) => seq.value)], // ?
+    sequenceType,
+    boardNumber,
+    unmarkedNumbers,
+  };
+};
 
 // I can 't think of a clever way of doing this, so just gonna brute force
 bingoNumbers.forEach((bingoNumber) => {
-  bingoBoards.forEach((bingoBoard) => {
+  bingoBoards.forEach((bingoBoard, boardNumber) => {
     bingoBoard.columns.forEach((bingoColumn) => {
-      if (!bingo && hasNumberTriggeredBingo(bingoNumber, bingoColumn)) {
-        bingoSequence = bingoColumn;
-        winningNumber = bingoNumber;
-        winningBoard = bingoBoard;
-        bingo = true;
+      if (!winningBoardData[boardNumber]) {
+        if (hasNumberTriggeredBingo(bingoNumber, bingoColumn)) {
+          winningBoards.push(boardNumber);
+          winningBoardData[boardNumber] = populateBoardData(
+            bingoNumber,
+            boardNumber,
+            bingoColumn,
+            "column",
+            bingoBoard.columns.reduce<number[]>((prevRow, currRow) => {
+              prevRow.push(
+                ...currRow
+                  .filter((bingoCell) => !bingoCell.isBingo)
+                  .map((unmarkedCell) => unmarkedCell.value)
+              );
+              return prevRow;
+            }, [])
+          );
+        }
       }
     });
 
     bingoBoard.rows.forEach((bingoRow) => {
-      if (!bingo && hasNumberTriggeredBingo(bingoNumber, bingoRow)) {
-        bingoSequence = bingoRow;
-        winningNumber = bingoNumber;
-        winningBoard = bingoBoard;
-        bingo = true;
+      if (!winningBoardData[boardNumber]) {
+        if (hasNumberTriggeredBingo(bingoNumber, bingoRow)) {
+          winningBoards.push(boardNumber);
+          winningBoardData[boardNumber] = populateBoardData(
+            bingoNumber,
+            boardNumber,
+            bingoRow,
+            "row",
+            bingoBoard.rows.reduce<number[]>((prevRow, currRow) => {
+              prevRow.push(
+                ...currRow
+                  .filter((bingoCell) => !bingoCell.isBingo)
+                  .map((unmarkedCell) => unmarkedCell.value)
+              );
+              return prevRow;
+            }, [])
+          );
+        }
       }
     });
   });
 });
 
-// I have an empty array in here, why D:
-const unmarkedNumbers: number[] = winningBoard.rows.reduce<number[]>(
-  (prevRow, currRow) => {
-    prevRow.push(
-      ...currRow
-        .filter((bingoCell) => !bingoCell.isBingo)
-        .map((unmarkedCell) => unmarkedCell.value)
-    );
+const firstWinner = winningBoardData[winningBoards.shift()];
+const lastWinner = winningBoardData[winningBoards.pop()];
 
-    return prevRow;
+const firstUnmarkedNumberSum = firstWinner.unmarkedNumbers.reduce(
+  (prevCell, currCell) => {
+    return (prevCell += currCell);
   },
-  []
+  0
 );
 
-const unmarkedNumberSum = unmarkedNumbers.reduce((prevCell, currCell) => {
-  return (prevCell += currCell);
-}, 0);
+const lastUnmarkedNumberSum = lastWinner.unmarkedNumbers.reduce(
+  (prevCell, currCell) => {
+    return (prevCell += currCell);
+  },
+  0
+);
 
 console.log({
-  winningNumber,
-  bingoSequence: bingoSequence.map((sequence) => sequence.value),
-  unmarkedNumbers,
-  unmarkedNumberSum,
-  score: winningNumber * unmarkedNumberSum,
+  bingoNumbers,
+  firstWinner,
+  lastWinner,
+  firstUnmarkedNumberSum,
+  lastUnmarkedNumberSum,
+  firstScore: firstWinner.winningNumber * firstUnmarkedNumberSum,
+  lastScore: lastWinner.winningNumber * lastUnmarkedNumberSum,
 });
