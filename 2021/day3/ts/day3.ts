@@ -15,7 +15,7 @@ const transposeArray = (input: number[][]): number[][] => {
 // the input contains binary sequences in each column
 // i.e. sequence #1 is ([0,0],[1,0],[2,0],...,[n,0])
 const binarySequencesByColumn: number[][] = fs
-  .readFileSync("../sample-input.txt", "utf8")
+  .readFileSync("../input.txt", "utf8")
   .split("\n")
   .filter(Boolean) // ignore EOF line
   .map((line: string) => line.split(""))
