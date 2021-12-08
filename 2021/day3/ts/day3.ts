@@ -15,7 +15,7 @@ const transposeArray = (input: number[][]): number[][] => {
 // the input contains binary sequences in each column
 // i.e. sequence #1 is ([0,0],[1,0],[2,0],...,[n,0])
 const binarySequencesByColumn: number[][] = fs
-  .readFileSync("../input.txt", "utf8")
+  .readFileSync("../sample-input.txt", "utf8")
   .split("\n")
   .filter(Boolean) // ignore EOF line
   .map((line: string) => line.split(""))
@@ -63,16 +63,12 @@ const filterSequenceByBitFrequency = (
   columnNumber: number,
   matchingDigit: number
 ): number[][] => {
-  let filteredSequences: number[][] = new Array(...inputSequences);
-
-  // move from bottom to top, so we can splice in place
-  // (otherwise referencing array cells are thrown off)
-  for (let i = filteredSequences.length - 1; i >= 0; i--) {
-    if (filteredSequences[i][columnNumber] !== matchingDigit) {
-      filteredSequences.splice(i, 1);
+  return inputSequences.reduce<number[][]>((previous, current) => {
+    if (current[columnNumber] !== matchingDigit) {
+      previous.push(current);
     }
-  }
-  return filteredSequences;
+    return previous;
+  }, []);
 };
 
 const filterLifeSupportSequencePart = (
