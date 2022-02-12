@@ -12,29 +12,6 @@ const transposeArray = (input: number[][]): number[][] => {
   return transposed;
 };
 
-// the input contains binary sequences in each column
-// i.e. sequence #1 is ([0,0],[1,0],[2,0],...,[n,0])
-const binarySequencesByColumn: number[][] = fs
-  .readFileSync("../input.txt", "utf8")
-  .split("\n")
-  .filter(Boolean) // ignore EOF line
-  .map((line: string) => line.split(""))
-  .map((binaryDigits: any[]) => {
-    return binaryDigits.map((d: string) => parseInt(d));
-  });
-
-// transpose the sequences to be in each row
-// i.e. sequence #1 is ([0,1],[0,2],[0,3],...,[0,n])
-const gammaSquence: number[] = transposeArray(binarySequencesByColumn).reduce(
-  (prevSequence, currSequence, index) => {
-    const sequenceLength = currSequence.length;
-    prevSequence[index] =
-      currSequence.filter(Boolean).length > sequenceLength / 2 ? 1 : 0;
-    return prevSequence;
-  },
-  []
-);
-
 type BitFreqCount = {
   oneCount: number;
   total: number;
@@ -99,34 +76,72 @@ const filterLifeSupportSequencePart = (
   return filteredSequencePart;
 };
 
-const epsilonSequence: number[] = gammaSquence.map((b) => (b === 1 ? 0 : 1));
-const gammaRate: number = parseInt(gammaSquence.join(""), 2);
-const epsilonRate: number = parseInt(epsilonSequence.join(""), 2);
-const oxygenGeneratorSequence = filterLifeSupportSequencePart(
-  binarySequencesByColumn,
-  1,
-  0
-);
-const c02ScrubberSequence = filterLifeSupportSequencePart(
-  binarySequencesByColumn,
-  0,
-  1
-);
-const oxygenGeneratorRate: number = parseInt(
-  oxygenGeneratorSequence[0].join(""),
-  2
-);
-const c02ScrubberRate: number = parseInt(c02ScrubberSequence[0].join(""), 2);
+// the input contains binary sequences in each column
+// i.e. sequence #1 is ([0,0],[1,0],[2,0],...,[n,0])
+const binarySequencesByColumn: number[][] = fs
+  .readFileSync(__dirname + "/input.txt", "utf8")
+  .split("\n")
+  .filter(Boolean) // ignore EOF line
+  .map((line: string) => line.split(""))
+  .map((binaryDigits: any[]) => {
+    return binaryDigits.map((d: string) => parseInt(d));
+  });
 
-console.log({
-  gammaSquence,
-  epsilonSequence,
-  gammaRate,
-  epsilonRate,
-  powerConsumption: gammaRate * epsilonRate,
-  oxygenGeneratorSequence,
-  c02ScrubberSequence,
-  oxygenGeneratorRate,
-  c02ScrubberRate,
-  lifeSupportRating: oxygenGeneratorRate * c02ScrubberRate,
-});
+export const day3 = () => {
+  // transpose the sequences to be in each row
+  // i.e. sequence #1 is ([0,1],[0,2],[0,3],...,[0,n])
+  const gammaSquence: number[] = transposeArray(binarySequencesByColumn).reduce(
+    (prevSequence, currSequence, index) => {
+      const sequenceLength = currSequence.length;
+      prevSequence[index] =
+        currSequence.filter(Boolean).length > sequenceLength / 2 ? 1 : 0;
+      return prevSequence;
+    },
+    []
+  );
+
+  const epsilonSequence: number[] = gammaSquence.map((b) => (b === 1 ? 0 : 1));
+  const gammaRate: number = parseInt(gammaSquence.join(""), 2);
+  const epsilonRate: number = parseInt(epsilonSequence.join(""), 2);
+  const oxygenGeneratorSequence = filterLifeSupportSequencePart(
+    binarySequencesByColumn,
+    1,
+    0
+  );
+  const c02ScrubberSequence = filterLifeSupportSequencePart(
+    binarySequencesByColumn,
+    0,
+    1
+  );
+  const oxygenGeneratorRate: number = parseInt(
+    oxygenGeneratorSequence[0].join(""),
+    2
+  );
+  const c02ScrubberRate: number = parseInt(c02ScrubberSequence[0].join(""), 2);
+
+  console.log({
+    gammaSquence,
+    epsilonSequence,
+    gammaRate,
+    epsilonRate,
+    powerConsumption: gammaRate * epsilonRate,
+    oxygenGeneratorSequence,
+    c02ScrubberSequence,
+    oxygenGeneratorRate,
+    c02ScrubberRate,
+    lifeSupportRating: oxygenGeneratorRate * c02ScrubberRate,
+  });
+
+  return {
+    gammaSquence,
+    epsilonSequence,
+    gammaRate,
+    epsilonRate,
+    powerConsumption: gammaRate * epsilonRate,
+    oxygenGeneratorSequence,
+    c02ScrubberSequence,
+    oxygenGeneratorRate,
+    c02ScrubberRate,
+    lifeSupportRating: oxygenGeneratorRate * c02ScrubberRate,
+  };
+};
