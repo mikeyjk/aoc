@@ -28,7 +28,7 @@ test("day 4 part 1 & 2", () => {
     },
     firstUnmarkedNumberSum: 693,
     lastUnmarkedNumberSum: 425,
-    firstScore: 27027,
-    lastScore: 36975,
+    firstScore: 27027, // pt1
+    lastScore: 36975, // pt2
   });
 });
