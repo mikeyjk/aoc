@@ -1,0 +1,12 @@
+{
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsc day2.ts --outDir dist",
+    "start": "npm run build; node dist/day2.js"
+  },
+  "devDependencies": {
+    "@types/jest": "^27.4.0",
+    "@types/mocha": "^9.1.0",
+    "@types/node": "^16.11.11"
+  }
+}
