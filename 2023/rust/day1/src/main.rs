@@ -13,9 +13,7 @@ fn main() {
     } else {
         let contents = contents_or_error.expect("");
         println!("With text:\n{contents}");
-    }
-
-    
+    }   
 }
 
 fn print_command(command: String) {
