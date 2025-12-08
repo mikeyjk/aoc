@@ -1,0 +1,10 @@
+{
+  "license": "UNLICENSED",
+  "scripts": {
+    "build": "tsc day1.ts --outDir dist",
+    "start": "npm run build; node dist/day1.js"
+  },
+  "devDependencies": {
+    "@types/node": "^16.11.11"
+  }
+}
