@@ -44,3 +44,112 @@ export const readProductIdRanges = ({ sample = false }: ReadInput) =>
       };
     })
     .filter(Boolean);
+
+export const sumInvalidRangesDueToSymmetricalNumber = (
+  range: ProductIdRange
+): number => {
+  let invalidRangeSum = 0;
+
+  // for each range, fill all the numbers
+  for (let currentId = range.startId; currentId <= range.endId; currentId++) {
+    if (isEvenSymmetricalNumber(currentId)) {
+      invalidRangeSum += currentId;
+    }
+  }
+  return invalidRangeSum;
+};
+
+// ez, rip it in half then compare it
+export const isEvenSymmetricalNumber = (number: number): boolean => {
+  const currentIdString = number.toString();
+  const currentIdFirstHalf = currentIdString.slice(
+    0,
+    currentIdString.length / 2
+  );
+  const currentIdSecondHalf = currentIdString.slice(
+    currentIdString.length / 2,
+    currentIdString.length
+  );
+
+  if (currentIdFirstHalf === currentIdSecondHalf) {
+    return true;
+  }
+  return false;
+};
+
+export const areAllDigitsIdentical = (numberString: string): boolean => {
+  numberString.matchAll;
+  return numberString.split(numberString[0]).length === numberString.length + 1;
+};
+
+// still ez, but not as ez, rip it into chunks when we find evenly divisible chunks
+export const isOddSymmetricalNumber = (number: number): boolean => {
+  const currentIdString = number.toString();
+  const currentIdLength = currentIdString.length;
+  const minimumGroupSize = 2; // groups of 2 should be handled prior
+
+  // find the largest possible chunks the number can be broken into evenly
+  for (
+    let chunkSize = currentIdLength;
+    chunkSize >= minimumGroupSize;
+    chunkSize--
+  ) {
+    if (currentIdLength % chunkSize === 0) {
+      // the number can be chunked evenly
+
+      const chunks = [];
+      let matchingChunks = 1;
+      let chunkItr = 0;
+
+      // for the amount of chunks we need (incrementing in position chunks)
+      for (
+        let chunkPos = 0;
+        chunkPos < currentIdLength;
+        chunkPos += currentIdLength / chunkSize
+      ) {
+        const currentChunk = currentIdString.slice(
+          chunkPos,
+          chunkPos + currentIdLength / chunkSize
+        );
+        chunks.push(currentChunk);
+        const previousChunkIndex = chunkItr - 1;
+
+        chunkItr++;
+
+        if (previousChunkIndex >= 0) {
+          const previousChunk = chunks[previousChunkIndex];
+          if (previousChunk === currentChunk) {
+            matchingChunks++;
+          } else {
+            break;
+          }
+        } // else no chunks to compare to yet
+      }
+
+      // we've filled all chunks (because all matched)
+      if (matchingChunks === chunkSize) {
+        return true;
+      }
+    }
+  }
+
+  return false;
+};
+
+export const sumInvalidRangesDueToSymmetricalAndRepeatingPatterns = (
+  range: ProductIdRange
+): number => {
+  let invalidRangeSum = 0;
+
+  // for each range, fill all the numbers
+  for (let currentId = range.startId; currentId <= range.endId; currentId++) {
+    const currentIdLength = currentId.toString().length;
+
+    if (currentIdLength % 2 === 0 && isEvenSymmetricalNumber(currentId)) {
+      invalidRangeSum += currentId;
+    } else if (isOddSymmetricalNumber(currentId)) {
+      invalidRangeSum += currentId;
+    }
+  }
+  return invalidRangeSum;
+};
